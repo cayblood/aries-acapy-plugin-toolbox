@@ -1,11 +1,43 @@
 version: "3"
 services:
-  ngrok:
-    image: wernight/ngrok
-    command: ngrok http agent:3000 --log stdout
-  agent:
-    build: .
+  agent-certifier:
+    image: 248523647632.dkr.ecr.us-west-2.amazonaws.com/aries-toolbox:v0.1.16
+    ports:
+      - "4000:4000"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: aries-toolbox
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: certifier
     environment:
-      NGROK_NAME: ngrok
-      AGENT_NAME: MyAgent
-      PORT: 3000
+      AGENT_NAME: Certifier
+      PORT: 4000
+  agent-supplier:
+    image: 248523647632.dkr.ecr.us-west-2.amazonaws.com/aries-toolbox:v0.1.16
+    ports:
+      - "4001:4001"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: aries-toolbox
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: supplier
+    environment:
+      AGENT_NAME: Supplier
+      PORT: 4001
+  agent-retailer:
+    image: 248523647632.dkr.ecr.us-west-2.amazonaws.com/aries-toolbox:v0.1.16
+    ports:
+      - "4002:4002"
+      - "4102:4102"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: aries-toolbox
+        awslogs-region: us-west-2
+        awslogs-stream-prefix: retailer
+    environment:
+      AGENT_NAME: Retailer
+      PORT: 4002
+      ADMIN_PORT: 4102

@@ -2,7 +2,7 @@ FROM bcgovimages/von-image:py36-1.14-0
 
 USER root
 RUN apt-get update
-RUN apt-get install -y wget gcc openssl pkg-config libssl-dev
+RUN apt-get install -y wget gcc openssl pkg-config libssl-dev curl
 # Rust
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
@@ -45,9 +45,7 @@ ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 ./jq
 RUN chmod +x ./jq
 COPY startup.sh startup.sh
 RUN chmod +x ./startup.sh
-COPY ngrok-wait.sh wait.sh
-RUN chmod +x ./wait.sh
 
 USER $user
 
-CMD ./wait.sh ./startup.sh
+CMD ./startup.sh

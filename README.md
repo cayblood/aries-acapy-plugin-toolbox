@@ -207,3 +207,65 @@ $ aca-py start \
 
 Note that you do not need to load any other plugins for this transport but you
 can by specifying `--plugin` as shown in the examples above.
+
+### Deployment on AWS
+
+Create the ECS Fargate cluster
+```
+aws iam --region us-west-2 create-role --role-name ecsTaskExecutionRole --assume-role-policy-document file://task-execution-assume-role.json
+aws iam --region us-west-2 attach-role-policy --role-name ecsTaskExecutionRole --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+aws ecs create-cluster --cluster-name aries --capacity-providers FARGATE
+
+aws ecs create-service --cluster aries --service-name aries-agents --launch-type FARGATE --platform-version 1.4.0
+
+[--task-definition <value>]
+[--load-balancers <value>]
+[--service-registries <value>]
+[--desired-count <value>]
+[--client-token <value>]
+[--launch-type <value>]
+[--capacity-provider-strategy <value>]
+[--platform-version <value>]
+[--role <value>]
+[--deployment-configuration <value>]
+[--placement-constraints <value>]
+[--placement-strategy <value>]
+[--network-configuration <value>]
+[--health-check-grace-period-seconds <value>]
+[--scheduling-strategy <value>]
+[--deployment-controller <value>]
+[--tags <value>]
+[--enable-ecs-managed-tags | --no-enable-ecs-managed-tags]
+[--propagate-tags <value>]
+[--cli-input-json | --cli-input-yaml]
+[--generate-cli-skeleton <value>]
+[--cli-auto-prompt <value>]
+
+
+ecs-cli configure --cluster aries-toolbox --default-launch-type FARGATE --config-name aries-toolbox --region us-west-2
+ecs-cli configure profile --access-key <AWS_ACCESS_KEY_ID> --secret-key <AWS_SECRET_ACCESS_KEY> --profile-name aries-toolbox-profile
+ecs-cli up --cluster-config aries-toolbox --ecs-profile aries-toolbox-profile
+```
+Write down subnets from the last command and put them in ecs-params.yml.
+```
+aws ec2 describe-security-groups --filters Name=vpc-id,Values=<VPCID from previous cmd> --region us-west-2
+aws ec2 authorize-security-group-ingress --group-id <security_group_id from previous cmd> --protocol tcp --port 80 --cidr 0.0.0.0/0 --region us-west-2
+```
+
+Build docker image and push it to Elastic Container Repository:
+```
+docker build . -t aries-agents:v0.1.0
+docker tag aries-agents:v0.1.0 248523647632.dkr.ecr.us-west-2.amazonaws.com/aries-containers:v0.1.0
+docker push 248523647632.dkr.ecr.us-west-2.amazonaws.com/aries-containers:v0.1.0
+
+docker build -t aries-toolbox .
+aws ecr create-repository --repository-name aries-containers --region us-west-2
+docker tag aries-toolbox <repositoryUri from previous command output>
+aws ecr get-login-password | docker login --username AWS --password-stdin <repositoryUri>
+docker push <repositoryUri>
+```
+Start Fargate cluster:
+```
+ecs-cli compose --project-name aries-toolbox service up --create-log-groups --cluster-config aries-toolbox --ecs-profile aries-toolbox-profile
+```

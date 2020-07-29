@@ -207,3 +207,10 @@ $ aca-py start \
 
 Note that you do not need to load any other plugins for this transport but you
 can by specifying `--plugin` as shown in the examples above.
+
+### Deployment on AWS
+
+#### Quick EC2 deployment
+```sh
+docker-compose -e ADMIN_API_KEY=secret -f docker-compose-relationalid.yml up --build
+```
